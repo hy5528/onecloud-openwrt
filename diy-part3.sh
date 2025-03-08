@@ -57,23 +57,7 @@ merge_package main https://github.com/xiaorouji/openwrt-passwall2 package/app lu
 merge_package main https://github.com/xiaorouji/openwrt-passwall package/app luci-app-passwall
 merge_package dev https://github.com/vernesong/OpenClash package/app luci-app-openclash
 
-# 内核，参照 kiddin9
-shopt -s extglob
-SHELL_FOLDER=$(dirname $(readlink -f "$0"))
-merge_package openwrt-24.10 https://github.com/immortalwrt/immortalwrt package package/emortal/automount
 
-./scripts/feeds update -a
-
-rm -rf feeds/packages/net/microsocks
-rm -rf feeds/packages/net/sing-box
-rm -rf feeds/packages/net/v2ray-core
-rm -rf feeds/packages/net/v2ray-geodata
-rm -rf feeds/packages/net/xray-core
-
-
-
-merge_package openwrt-23.05 https://github.com/coolsnowwolf/luci feeds/luci/applications applications/luci-app-pppwn
-merge_package openwrt-24.10 https://github.com/immortalwrt/luci feeds/luci/applications applications/luci-app-msd_lite
 
 # echo '### Argon Theme Config ###'
 # rm -rf feeds/luci/themes/luci-theme-argon
