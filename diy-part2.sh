@@ -49,4 +49,7 @@ sed -i "/timezone='.*'/a\\\t\t\set system.@system[-1].zonename='Asia/Shanghai'" 
 # sed -i 's/processes = 3/processes = 4/g' feeds/packages/net/uwsgi/files-luci-support/luci-webui.ini
 # sed -i 's/cheaper = 1/cheaper = 2/g' feeds/packages/net/uwsgi/files-luci-support/luci-webui.ini
 
+# 替换终端为bash
+sed -i 's/\/bin\/ash/\/bin\/bash/' package/base-files/files/etc/passwd
+
 
