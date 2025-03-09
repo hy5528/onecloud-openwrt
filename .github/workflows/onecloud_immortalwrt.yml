@@ -208,7 +208,7 @@ jobs:
         body: |
           This is OpenWrt firmware for OneCloud
           ### 📒 Firmware information
-          - 🚀 amlogic_meson8b 多功能版，集成插件多
+          - 🚀 amlogic_meson8b 多功能版。
           - 💋一键扩容 cd /root ./expand-root.sh
           - 💻 平台架构: ARMV7
           - ⚽ 固件源码:  https://github.com/immortalwrt/immortalwrt
