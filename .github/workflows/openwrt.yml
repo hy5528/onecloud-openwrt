@@ -189,52 +189,55 @@ jobs:
         name: OpenWrt-l2410_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: openwrt/bin
 
-    - name: Organize files
+    - name: 整理固件
       id: organize
-      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       run: |
-        cd openwrt/bin/targets/*/*
-        rm -rf packages
+        cd openwrt
+        mkdir outfile
+        cp -rf bin/targets/*/*/*.tar ./outfile
+        cp -rf bin/targets/*/*/*.xz ./outfile
+        cp -rf .config ./outfile/config.txt
+        rm -rf bin/targets/*/*/packages
+        
+        cd outfile
+        
+        if [[ $REPO_URL == *"immortalwrt"* ]]; then
+          gzip *.tar
+        fi
+        
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
-        echo "status=success" >> $GITHUB_OUTPUT
+        echo "::set-output name=status::success"
+        
+        #信息
+        export OWRT_DATE=$(TZ=UTC-8 date +"%y.%m.%d_%H.%M.%S")
+        export OWRT_SOURCE=$(echo $REPO_URL | cut -d '/' -f 5-)
+        echo "OWRT_SOURCE=$OWRT_SOURCE" >> $GITHUB_ENV
+        echo "OWRT_DATE=$OWRT_DATE" >> $GITHUB_ENV
 
-    - name: Upload firmware directory
-      uses: actions/upload-artifact@main
-      if: steps.organize.outputs.status == 'success' && !cancelled()
+    - name: 上传直刷固件
+      uses: ncipollo/release-action@v1
       with:
-        name: OpenWrt-l2410_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
-        path: ${{ env.FIRMWARE }}
-
-    - name: Generate release tag
-      id: tag
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-      run: |
-        echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
-        touch release.txt
-        [ ${UPLOAD_GOFILE} = true && ${{ steps.gofile.outputs.url }} ] && echo "🔗 [GoFile](${{ steps.gofile.outputs.url }})" >> release.txt
-        echo "status=success" >> $GITHUB_OUTPUT
-
-    - name: Upload firmware to release
-      uses: softprops/action-gh-release@master
-      if: steps.tag.outputs.status == 'success' && !cancelled()
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        allowUpdates: true
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: OpenWrt_${{ env.OWRT_SOURCE }}_${{ env.OWRT_DATE }}
+        body: |
+          自用玩客云一站式直刷固件[${{ env.OWRT_brun_type }}]！
+          请使用双USB公头线刷机！
+          ==========🧊 基本信息 🧊==========
+          💻 固件源码： ${{env.OWRT_SOURCE}}
+          💝 源码分支： ${{ env.OWRT_BRANCH }}
+          🔑 默认密码： password
+          🌐 默认地址： ${{env.OWRT_IP}}
+        artifacts: ${{ env.FIRMWARE }}/*
+        
+    - name: 清理Releases
+      uses: rmoyulong/delete-older-releases@master
       with:
-        tag_name: ${{ steps.tag.outputs.release_tag }}
-        body_path: release.txt
-        files: ${{ env.FIRMWARE }}/*
+        keep_latest: 10
+        delete_tags: true
 
-    - name: Delete workflow runs
-      uses: Mattraks/delete-workflow-runs@main
+    - name: 清理Workflows
+      uses: rmoyulong/delete-workflow-runs@main
       with:
         retain_days: 0
-        keep_minimum_runs: 2
-
-    - name: Remove old Releases
-      uses: dev-drprasad/delete-older-releases@master
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-      with:
-        keep_latest: 3
-        delete_tags: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        keep_minimum_runs: 1
