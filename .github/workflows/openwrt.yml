@@ -124,13 +124,13 @@ jobs:
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
         echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
 
-    - name: Generate direct burn
+     - name: Generate direct burn
       run: |
           sudo apt install android-sdk-libsparse-utils
           ver="v0.3.1"
-          curl -L -o ./AmlImg https://github.com/lxiaya/AmlImg/releases/download/$ver/AmlImg_${ver}_linux_amd64
+          curl -L -o ./AmlImg https://github.com/hzyitc/AmlImg/releases/download/$ver/AmlImg_${ver}_linux_amd64
           chmod +x ./AmlImg
-          curl -L -o ./uboot.img https://github.com/lxiaya/u-boot-onecloud/releases/download/build-20230901-0443/eMMC.burn.img
+          curl -L -o ./uboot.img https://github.com/hzyitc/u-boot-onecloud/releases/download/build-20221028-0940/eMMC.burn.img
           ./AmlImg unpack ./uboot.img burn/
           echo "::endgroup::"
           gunzip openwrt/bin/targets/*/*/*.gz
@@ -148,7 +148,7 @@ jobs:
           sudo rm -rf ${boot_img}
           sudo rm -rf ${boot_img_mnt}
           sudo rm -rf ${rootfs_img_mnt}
-          sudo dd if=/dev/zero of=${boot_img} bs=1M count=400
+          sudo dd if=/dev/zero of=${boot_img} bs=1M count=900
           sudo mkfs.ext4 ${boot_img}
           sudo mkdir ${boot_img_mnt}
           sudo mkdir ${rootfs_img_mnt}
@@ -186,58 +186,68 @@ jobs:
       uses: actions/upload-artifact@main
       if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
       with:
-        name: OpenWrt-l2410_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: openwrt/bin
 
-    - name: 整理固件
+    - name: Organize files
       id: organize
+      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       run: |
-        cd openwrt
-        mkdir outfile
-        cp -rf bin/targets/*/*/*.tar ./outfile
-        cp -rf bin/targets/*/*/*.xz ./outfile
-        cp -rf .config ./outfile/config.txt
-        rm -rf bin/targets/*/*/packages
-        
-        cd outfile
-        
-        if [[ $REPO_URL == *"immortalwrt"* ]]; then
-          gzip *.tar
-        fi
-        
+        cd openwrt/bin/targets/*/*
+        rm -rf packages
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
-        echo "::set-output name=status::success"
-        
-        #信息
-        export OWRT_DATE=$(TZ=UTC-8 date +"%y.%m.%d_%H.%M.%S")
-        export OWRT_SOURCE=$(echo $REPO_URL | cut -d '/' -f 5-)
-        echo "OWRT_SOURCE=$OWRT_SOURCE" >> $GITHUB_ENV
-        echo "OWRT_DATE=$OWRT_DATE" >> $GITHUB_ENV
+        echo "status=success" >> $GITHUB_OUTPUT
 
-    - name: 上传直刷固件
-      uses: ncipollo/release-action@v1
+    - name: Upload firmware directory
+      uses: actions/upload-artifact@main
+      if: steps.organize.outputs.status == 'success' && !cancelled()
       with:
-        allowUpdates: true
-        token: ${{ secrets.GITHUB_TOKEN }}
-        tag: OpenWrt_${{ env.OWRT_SOURCE }}_${{ env.OWRT_DATE }}
+        name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: ${{ env.FIRMWARE }}
+
+    - name: Generate release tag
+      id: tag
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      run: |
+        echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
+        touch release.txt
+        [ $UPLOAD_COWTRANSFER = true ] && echo "🔗 [Cowtransfer](${{ steps.cowtransfer.outputs.url }})" >> release.txt
+        [ $UPLOAD_WETRANSFER = true ] && echo "🔗 [WeTransfer](${{ steps.wetransfer.outputs.url }})" >> release.txt
+        echo "status=success" >> $GITHUB_OUTPUT
+
+    - name: Upload firmware to Releases
+      uses: softprops/action-gh-release@v2.2.1
+      if: steps.tag.outputs.status == 'success' && !cancelled()
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        name: ${{ steps.tag.outputs.release_tag }} for OneCloud_${{ env.OPENWRT_TAG }} ${{ env.EMOJI }}
+        tag_name: ${{ env.OPENWRT_TAG }}
+        body_path: release.txt
+        files: ${{ env.FIRMWARE }}/*
         body: |
-          自用玩客云一站式直刷固件[${{ env.OWRT_brun_type }}]！
-          请使用双USB公头线刷机！
-          ==========🧊 基本信息 🧊==========
-          💻 固件源码： ${{env.OWRT_SOURCE}}
-          💝 源码分支： ${{ env.OWRT_BRANCH }}
-          🔑 默认密码： password
-          🌐 默认地址： ${{env.OWRT_IP}}
-        artifacts: ${{ env.FIRMWARE }}/*
+          This is OpenWrt firmware for OneCloud
+          ### 📒 Firmware information
+          - 🚀 amlogic_meson8b 多功能版，集成插件多
+          - 💋一键扩容 cd /root ./expand-root.sh
+          - 💻 平台架构: ${{ env.DEVICE_TARGET }}-${{ env.DEVICE_SUBTARGET }}
+          - ⚽ 固件源码: ${{ env.REPO_URL }}
+          - 💝 源码分支: ${{ env.REPO_BRANCH }}
+          - 🌐 Default IP: 192.168.2.158
+          - 🔑 Default username: root
+          - 🔑 Default password: password
         
-    - name: 清理Releases
-      uses: rmoyulong/delete-older-releases@master
+    - name: Delete workflow runs
+      uses: Mattraks/delete-workflow-runs@main
       with:
-        keep_latest: 10
-        delete_tags: true
+        retain_days: 1
+        keep_minimum_runs: 3
 
-    - name: 清理Workflows
-      uses: rmoyulong/delete-workflow-runs@main
+    - name: Remove old Releases
+      uses: dev-drprasad/delete-older-releases@master
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       with:
-        retain_days: 0
-        keep_minimum_runs: 1
+        keep_latest: 3
+        delete_tags: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
