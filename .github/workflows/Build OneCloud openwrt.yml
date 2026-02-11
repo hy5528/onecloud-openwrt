@@ -214,8 +214,16 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ steps.tag.outputs.release_tag }}
-        body_path: release.txt
         files: ${{ env.FIRMWARE }}/*
+        body: |
+          自用玩客云一站式直刷固件[${{ env.OWRT_brun_type }}]！
+          请使用双USB公头线刷机！
+          ==========🧊 基本信息 🧊==========
+          💻 固件源码： ${{env.OWRT_SOURCE}}
+          💝 源码分支： ${{ env.OWRT_BRANCH }}
+          🔑 默认密码： password
+          🌐 默认地址： 192.168.2.158
+        artifacts: ${{ env.FIRMWARE }}/*
 
     - name: Delete workflow runs
       uses: Mattraks/delete-workflow-runs@main
