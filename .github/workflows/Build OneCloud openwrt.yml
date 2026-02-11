@@ -216,11 +216,11 @@ jobs:
         tag_name: ${{ steps.tag.outputs.release_tag }}
         files: ${{ env.FIRMWARE }}/*
         body: |
-          自用玩客云一站式直刷固件[${{ env.OWRT_brun_type }}]！
+          自用玩客云直刷固件[${{ env.OWRT_brun_type }}]！
           请使用双USB公头线刷机！
           ==========🧊 基本信息 🧊==========
-          💻 固件源码： ${{env.OWRT_SOURCE}}
-          💝 源码分支： ${{ env.OWRT_BRANCH }}
+          💻 固件源码：https://github.com/openwrt/openwrt
+          💝 源码分支： openwrt-24.10
           🔑 默认密码： password
           🌐 默认地址： 192.168.2.158
         artifacts: ${{ env.FIRMWARE }}/*
