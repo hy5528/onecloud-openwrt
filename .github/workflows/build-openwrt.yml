@@ -16,12 +16,18 @@ on:
   repository_dispatch:
   workflow_dispatch:
     inputs:
-       
       ssh:
         description: 'SSH connection to Actions'
         required: false
         default: 'false'
-
+     brun_type:
+        type: choice
+        description: 选择需要编译的直刷包类型
+        required: true
+        default: "amlogic6.6"
+        options: 
+        - amlogic6.1
+        - amlogic6.6
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
   REPO_BRANCH: master
