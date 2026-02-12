@@ -52,9 +52,11 @@ jobs:
         run: |
           sudo apt install img2simg
           ver="v0.3.1"
+          curl -L -o ./AmlImg https://github.com/lxiaya/AmlImg/releases/download/$ver/AmlImg_${ver}_linux_amd64
           chmod +x ./AmlImg
       - name: Download and unpack the latest u-boot
         run: |
+          curl -L -o ./uboot.img https://github.com/lxiaya/u-boot-onecloud/releases/download/build-20230901-0443/eMMC.burn.img
           ./AmlImg unpack ./uboot.img burn/
       - name: Extract boot and rootfs partitions
         run: |
