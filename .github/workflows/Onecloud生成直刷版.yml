@@ -45,7 +45,7 @@ jobs:
           mkdir -p build/output/images
           chmod -R 777 build
           cd build/output/images
-          wget https://github.com/mufeng05/Armbian-onecloud-burn-build/releases/download/ci-20250401-065441-UTC/Armbian-unofficial_25.2.3_Onecloud_bookworm_current_6.12.21.img.xz
+          wget https://github.com/hy5528/build-Openwrt-Armbian/releases/download/20250523/Armbian_20.12_Aml-s812_buster_current_5.9.0-rc7.img.xz
           unxz *.img.xz
         
       - name: Install Dependents
