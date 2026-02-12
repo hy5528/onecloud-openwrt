@@ -216,7 +216,7 @@ jobs:
         tag_name: ${{ steps.tag.outputs.release_tag }}
         files: ${{ env.FIRMWARE }}/*
         body: |
-          自用玩客云直刷固件[${{ env.OWRT_brun_type }}]！
+          自用玩客云直刷固件！
           请使用双USB公头线刷机！
           ==========🧊 基本信息 🧊==========
           💻 固件源码：https://github.com/openwrt/openwrt
