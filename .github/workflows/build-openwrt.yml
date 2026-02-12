@@ -16,14 +16,10 @@ on:
   repository_dispatch:
   workflow_dispatch:
     inputs:
-      brun_type:
-        type: choice
-        description: 选择需要编译的直刷包类型
-        required: true
-        default: "amlogic6.6"
-        options: 
-        - amlogic6.1
-        - amlogic6.6 
+      ssh:
+        description: 'SSH connection to Actions'
+        required: false
+        default: 'false'
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
   REPO_BRANCH: master
@@ -77,6 +73,7 @@ jobs:
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
     - name: Load onecloud
       run: |
+        sudo rm -r openwrt/target/linux/amlogic
         [ -e target ] && cp -rf target openwrt/
 
     - name: Load custom feeds
