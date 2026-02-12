@@ -45,7 +45,7 @@ jobs:
           mkdir -p build/output/images
           chmod -R 777 build
           cd build/output/images
-          wget https://github.com/hy5528/build-Openwrt-Armbian/releases/download/20250523/Armbian_by-SilentWind_24.5.0-trunk_Onecloud_bookworm_legacy_5.9.0-rc7_minimal.img.xz
+          wget https://github.com/hy5528/build-Openwrt-Armbian/releases/download/20250523/Armbian_24.03_Aml-s812_jammy_current_5.9.0-rc7_minimal.img.xz
           unxz *.img.xz
         
       - name: Install Dependents
