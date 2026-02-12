@@ -10,23 +10,19 @@
 # See /LICENSE for more information.
 #
 
-name: Build OneCloud lede
+name: OpenWrt Builder
 
 on:
   repository_dispatch:
   workflow_dispatch:
-    inputs:
-      ssh:
-        description: 'SSH connection to Actions'
-        required: false
-        default: 'false'
+
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
-  REPO_BRANCH: master
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: onecloud.config
   DIY_P1_SH: op1.sh
   DIY_P2_SH: op2.sh
+  GEN_BURN_IMG_SH: gen_burn_img.sh
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
@@ -69,12 +65,8 @@ jobs:
       working-directory: /workdir
       run: |
         df -hT $PWD
-        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        git clone --depth=1 https://github.com/coolsnowwolf/lede -b 20251001 openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
-    - name: Load onecloud
-      run: |
-        sudo rm -r openwrt/target/linux/amlogic
-        [ -e target ] && cp -rf target openwrt/
 
     - name: Load custom feeds
       run: |
@@ -96,13 +88,6 @@ jobs:
         chmod +x $DIY_P2_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
-
-    - name: SSH connection to Actions
-      uses: P3TERX/ssh2actions@v1.0.0
-      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
-      env:
-        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
     - name: Download package
       id: package
@@ -129,59 +114,12 @@ jobs:
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
         echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
 
-    - name: Generate direct burn
+    - name: 生成直刷包
+      if: steps.compile.outputs.status == 'success'
       run: |
-          sudo apt install android-sdk-libsparse-utils
-          ver="v0.3.1"
-          curl -L -o ./AmlImg https://github.com/lxiaya/AmlImg/releases/download/$ver/AmlImg_${ver}_linux_amd64
-          chmod +x ./AmlImg
-          curl -L -o ./uboot.img https://github.com/lxiaya/u-boot-onecloud/releases/download/build-20230901-0443/eMMC.burn.img
-          ./AmlImg unpack ./uboot.img burn/
-          echo "::endgroup::"
-          gunzip openwrt/bin/targets/*/*/*.gz
-          diskimg=$(ls openwrt/bin/targets/*/*/*.img)
-          loop=$(sudo losetup --find --show --partscan $diskimg)
-          img_ext="openwrt.img"
-          img_mnt="xd"
-          rootfs_mnt="img"
-          boot_img=$1${img_ext}
-          boot_img_mnt=$1${img_mnt}
-          rootfs_img_mnt=$1${rootfs_mnt}
-          echo ${boot_img}
-          echo ${boot_img_mnt}
-          echo ${rootfs_img_mnt}
-          sudo rm -rf ${boot_img}
-          sudo rm -rf ${boot_img_mnt}
-          sudo rm -rf ${rootfs_img_mnt}
-          sudo dd if=/dev/zero of=${boot_img} bs=1M count=400
-          sudo mkfs.ext4 ${boot_img}
-          sudo mkdir ${boot_img_mnt}
-          sudo mkdir ${rootfs_img_mnt}
-          sudo mount ${boot_img} ${boot_img_mnt}
-          sudo mount ${loop}p2 ${rootfs_img_mnt}
-          cd ${rootfs_img_mnt}
-          sudo cp -r * ../${boot_img_mnt}
-          cd ..
-          sudo sync
-          sudo umount ${boot_img_mnt}
-          sudo umount ${rootfs_img_mnt}
-          sudo img2simg ${loop}p1 burn/boot.simg
-          sudo img2simg openwrt.img burn/rootfs.simg
-          sudo rm -rf *.img
-          sudo losetup -d $loop
-          cat <<EOF >>burn/commands.txt
-          PARTITION:boot:sparse:boot.simg
-          PARTITION:rootfs:sparse:rootfs.simg
-          EOF
-          prefix=$(ls openwrt/bin/targets/*/*/*.img | sed 's/\.img$//')
-          burnimg=${prefix}.burn.img
-          ./AmlImg pack $burnimg burn/
-          for f in openwrt/bin/targets/*/*/*.burn.img; do
-            sha256sum "$f" >"${f}.sha"
-            xz -9 --threads=0 --compress "$f"
-          done
-          sudo rm -rf openwrt/bin/targets/*/*/*.img
-          sudo rm -rf openwrt/bin/targets/*/*/*.gz
+        chmod +x $GEN_BURN_IMG_SH
+        chmod +x AmlImg
+        $GITHUB_WORKSPACE/$GEN_BURN_IMG_SH
 
     - name: Check space usage
       if: (!cancelled())
@@ -192,7 +130,7 @@ jobs:
       if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       run: |
         cd openwrt/bin/targets/*/*
-        rm -rf packages
+        rm -rf packages feeds.buildinfo version.buildinfo sha256sums profiles.json *.sha *.manifest
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
 
@@ -200,7 +138,7 @@ jobs:
       uses: actions/upload-artifact@main
       if: steps.organize.outputs.status == 'success' && !cancelled()
       with:
-        name: Lean_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: ${{ env.FIRMWARE }}
 
     - name: Generate release tag
@@ -213,7 +151,7 @@ jobs:
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Upload firmware to release
-      uses: softprops/action-gh-release@master
+      uses: softprops/action-gh-release@v2.1.0
       if: steps.tag.outputs.status == 'success' && !cancelled()
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -221,18 +159,3 @@ jobs:
         tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
         files: ${{ env.FIRMWARE }}/*
-
-    - name: Delete workflow runs
-      uses: Mattraks/delete-workflow-runs@main
-      with:
-        retain_days: 0
-        keep_minimum_runs: 2
-
-    - name: Remove old Releases
-      uses: dev-drprasad/delete-older-releases@master
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-      with:
-        keep_latest: 3
-        delete_tags: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
