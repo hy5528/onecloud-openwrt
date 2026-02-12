@@ -75,30 +75,6 @@ jobs:
         df -hT $PWD
         git clone $REPO_URL -b $REPO_BRANCH openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
-    - name: 设置订阅源
-      run: |
-        
-        cd openwrt
-
-        elif [[ "${{ env.OWRT_brun_type }}" == "amlogic6.1" ]]; then
-          ls -l target/linux/amlogic
-          echo "amlogic6.1"
-        elif [[ "${{ env.OWRT_brun_type }}" == "amlogic6.6" ]]; then
-          chmod -Rf 755 target/linux/amlogic
-          ls -l target/linux/amlogic
-          echo "amlogic6.6"
-        fi
-        
-        $GITHUB_WORKSPACE/$DIY_P1_SH
-        #echo 'src-git kiddin9 https://github.com/kiddin9/openwrt-packages' >> feeds.conf.default
-        echo "COMMIT_HASH=$(git rev-parse HEAD)" >> $GITHUB_ENV
- 
-    - name: 启动缓存[第二次起生效]
-      uses: rmoyulong/cachewrtbuild@main
-      with:
-        ccache: 'true'
-        prefix: ${{ github.workspace }}/openwrt
-        mixkey: ${{ env.OWRT_brun_type }}/tree/${{ env.OWRT_BRANCH }}?device=${{ env.OWRT_CFG }} 
     - name: Load custom feeds
       run: |
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
