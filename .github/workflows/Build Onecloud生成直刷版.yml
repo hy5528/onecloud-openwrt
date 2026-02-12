@@ -1,4 +1,4 @@
-name: Onecloud burn
+name: Build Onecloud burn
 
 on:
   workflow_dispatch:
