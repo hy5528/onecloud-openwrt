@@ -10,7 +10,7 @@
 # See /LICENSE for more information.
 #
 
-name: Build OneCloud
+name: Build OneCloud lede
 
 on:
   repository_dispatch:
