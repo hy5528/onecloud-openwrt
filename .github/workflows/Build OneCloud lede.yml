@@ -65,7 +65,7 @@ jobs:
       working-directory: /workdir
       run: |
         df -hT $PWD
-        git clone --depth=1 https://github.com/coolsnowwolf/lede -b master openwrt
+        git clone --depth=1 https://github.com/coolsnowwolf/lede -b 20251001 openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
     - name: Load custom feeds
