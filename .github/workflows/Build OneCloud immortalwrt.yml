@@ -128,9 +128,9 @@ jobs:
       run: |
           sudo apt install android-sdk-libsparse-utils
           ver="v0.3.1"
-          curl -L -o ./AmlImg https://github.com/lxiaya/AmlImg/releases/download/$ver/AmlImg_${ver}_linux_amd64
+          curl -L -o ./AmlImg https://github.com/hzyitc/AmlImg/releases/download/$ver/AmlImg_${ver}_linux_amd64
           chmod +x ./AmlImg
-          curl -L -o ./uboot.img https://github.com/lxiaya/u-boot-onecloud/releases/download/build-20230901-0443/eMMC.burn.img
+          curl -L -o ./uboot.img https://github.com/hzyitc/u-boot-onecloud/releases/download/build-20221028-0940/eMMC.burn.img
           ./AmlImg unpack ./uboot.img burn/
           echo "::endgroup::"
           gunzip openwrt/bin/targets/*/*/*.gz
@@ -148,7 +148,7 @@ jobs:
           sudo rm -rf ${boot_img}
           sudo rm -rf ${boot_img_mnt}
           sudo rm -rf ${rootfs_img_mnt}
-          sudo dd if=/dev/zero of=${boot_img} bs=1M count=400
+          sudo dd if=/dev/zero of=${boot_img} bs=1M count=900
           sudo mkfs.ext4 ${boot_img}
           sudo mkdir ${boot_img_mnt}
           sudo mkdir ${rootfs_img_mnt}
