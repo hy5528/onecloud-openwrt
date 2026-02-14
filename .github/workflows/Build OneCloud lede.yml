@@ -15,7 +15,18 @@ name: Build OneCloud lede
 on:
   repository_dispatch:
   workflow_dispatch:
+    inputs:
+      ENABLE_DHCP:
+        description: '是否开启DHCP'     
+        required: false
+        default: 'false'
+        type: boolean 
 
+      OP_IP:
+        description: '静态IP地址'     
+        required: false
+        default: '192.168.2.158' 
+        type: string
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
   FEEDS_CONF: feeds.conf.default
@@ -84,10 +95,20 @@ jobs:
     - name: Load custom configuration
       run: |
         [ -e files ] && mv files openwrt/files
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-        chmod +x $DIY_P2_SH
-        cd openwrt
-        $GITHUB_WORKSPACE/$DIY_P2_SH
+        cat <<EOF >>openwrt/.config
+        EOF
+        
+        [ -e config ] && cat config/config-common >> openwrt/.config
+        
+        if [[ "${{ github.event.inputs.ENABLE_DHCP }}" == "false" ]]; then
+          rm -rf openwrt/files/etc/uci-defaults/dhcp-lan
+          sed -i "s/192.168.1.1/${{ github.event.inputs.OP_IP }}/" openwrt/package/base-files/files/bin/config_generate
+        fi
+        
+        IFS=' ' read -r -a plugins <<< "${{ github.event.inputs.CUSTOM_PLUGINS }}"
+        for plugin in "${plugins[@]}"; do
+          echo "CONFIG_PACKAGE_${plugin}=y" >> openwrt/.config
+        done    
 
     - name: Download package
       id: package
