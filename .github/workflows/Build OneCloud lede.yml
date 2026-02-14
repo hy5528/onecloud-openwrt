@@ -32,7 +32,6 @@ env:
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: .config
   DIY_P1_SH: op1.sh
-  DIY_P2_SH: op2.sh
   GEN_BURN_IMG_SH: gen_burn_img.sh
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
