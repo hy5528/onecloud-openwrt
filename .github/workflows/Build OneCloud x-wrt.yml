@@ -10,7 +10,7 @@
 # See /LICENSE for more information.
 #
 
-name: Build OneCloud Lienol
+name: Build OneCloud x-wrt
 
 on:
   repository_dispatch:
