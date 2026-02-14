@@ -22,8 +22,8 @@ on:
         default: 'false'
 
 env:
-  REPO_URL: https://github.com/Lienol/openwrt.git
-  REPO_BRANCH: 24.10
+  REPO_URL: https://github.com/x-wrt/x-wrt.git
+  REPO_BRANCH: master
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: onecloud.config
   DIY_P1_SH: op1.sh
