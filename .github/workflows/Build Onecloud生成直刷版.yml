@@ -45,8 +45,8 @@ jobs:
           mkdir -p build/output/images
           chmod -R 777 build
           cd build/output/images
-          wget https://github.com/hy5528/build-Openwrt-Armbian/releases/download/20250523/Armbian_24.03_Aml-s812_jammy_current_5.9.0-rc7_minimal.img.xz
-          unxz *.img.xz
+          wget https://github.com/adjlevis/onecloud-openwrt-docker/releases/download/latest/thunder-onecloud-emmc-ext4.img.gz
+          unxz *.img.gz
         
       - name: Install Dependents
         run: |
