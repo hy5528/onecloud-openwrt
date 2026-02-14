@@ -46,7 +46,8 @@ jobs:
           chmod -R 777 build
           cd build/output/images
           wget https://github.com/adjlevis/onecloud-openwrt-docker/releases/download/latest/thunder-onecloud-emmc-ext4.img.gz
-          unxz *.img.gz
+          gunzip *.img.gz
+          #unxz *.img.gz
         
       - name: Install Dependents
         run: |
