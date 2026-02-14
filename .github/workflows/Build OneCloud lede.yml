@@ -21,6 +21,7 @@ env:
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: .config
   DIY_P1_SH: op1.sh
+  DIY_P2_SH: op2.sh
   GEN_BURN_IMG_SH: gen_burn_img.sh
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
@@ -83,20 +84,10 @@ jobs:
     - name: Load custom configuration
       run: |
         [ -e files ] && mv files openwrt/files
-        cat <<EOF >>openwrt/.config
-        EOF
-        
-        [ -e config ] && cat config/config-common >> openwrt/.config
-        
-        if [[ "${{ github.event.inputs.ENABLE_DHCP }}" == "false" ]]; then
-          rm -rf openwrt/files/etc/uci-defaults/dhcp-lan
-          sed -i "s/192.168.1.1/${{ github.event.inputs.OP_IP }}/" openwrt/package/base-files/files/bin/config_generate
-        fi
-        
-        IFS=' ' read -r -a plugins <<< "${{ github.event.inputs.CUSTOM_PLUGINS }}"
-        for plugin in "${plugins[@]}"; do
-          echo "CONFIG_PACKAGE_${plugin}=y" >> openwrt/.config
-        done    
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        chmod +x $DIY_P2_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P2_SH
 
     - name: Download package
       id: package
