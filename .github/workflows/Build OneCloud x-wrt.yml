@@ -23,7 +23,7 @@ on:
 
 env:
   REPO_URL: https://github.com/x-wrt/x-wrt.git
-  REPO_BRANCH: master
+  REPO_BRANCH: pr-20250930
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: onecloud.config
   DIY_P1_SH: op1.sh
