@@ -15,18 +15,7 @@ name: Build OneCloud lede
 on:
   repository_dispatch:
   workflow_dispatch:
-    inputs:
-      ENABLE_DHCP:
-        description: '是否开启DHCP'     
-        required: false
-        default: 'false'
-        type: boolean 
-
-      OP_IP:
-        description: '静态IP地址'     
-        required: false
-        default: '192.168.2.158' 
-        type: string
+    
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
   FEEDS_CONF: feeds.conf.default
